@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@repo/ui": "*",
+    "cuid": "^3.0.0",
     "rxdb": "^15.28.0",
     "rxjs": "^7.8.1",
     "solid-js": "^1.8.11"
