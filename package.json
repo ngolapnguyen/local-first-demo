@@ -16,5 +16,9 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "broadcast-channel": "^7.0.0",
+    "rxdb": "^15.28.0"
+  }
 }

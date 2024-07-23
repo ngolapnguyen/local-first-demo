@@ -1,23 +1,26 @@
-import cuid from "cuid";
-import { createRxDatabase } from "rxdb";
+import { createRxDatabase, RxCollection } from "rxdb";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
+import { TodoStatus } from "../types";
 
-export enum TodoStatus {
-  NotStarted = "not-started",
-  Done = "done",
-}
 
 export const initDb = async () => {
-  const db = await createRxDatabase({
+  try {
+  const db = await createRxDatabase<{
+    todos: RxCollection<{
+      id: string;
+      name: string;
+      status: TodoStatus;
+    }>;
+  }>({
     name: "nhung-db", // <- name
     storage: getRxStorageDexie(), // <- RxStorage
     password: "myPassword", // <- password (optional)
-    multiInstance: true, // <- multiInstance (optional, default: true)
+    multiInstance: false, // <- multiInstance (optional, default: true)
     eventReduce: true, // <- eventReduce (optional, default: false)
     cleanupPolicy: {}, // <- custom cleanup policy (optional)
   });
 
-  const collections = await db.addCollections({
+  await db.addCollections({
     // key = collectionName
     todos: {
       schema: {
@@ -39,7 +42,7 @@ export const initDb = async () => {
             default: TodoStatus.NotStarted,
           },
         },
-        required: ["id", "name"],
+        required: ["id", "name", "status"],
       },
       statics: {}, // (optional) ORM-functions for this collection
       methods: {}, // (optional) ORM-functions for documents
@@ -51,14 +54,17 @@ export const initDb = async () => {
     },
   });
 
-  const todoCollection = collections.todos;
-  todoCollection.insert({
-    id: cuid(),
-    name: "My Todo",
-  });
+  // const todoCollection = collections.todos;
+  // todoCollection.insert({
+  //   id: cuid(),
+  //   name: "My Todo",
+  // });
 
-  return {
-    db,
-    collections,
-  };
+  return db
+   } catch (error) {
+    console.error('RxError:', error);
+    throw error;
+  }
 };
+
+export type DBType = Awaited<ReturnType<typeof initDb>>;
