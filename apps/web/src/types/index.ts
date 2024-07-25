@@ -1,11 +1,14 @@
 export enum TodoStatus {
-  NotStarted = "not-started",
-  Done = "done",
+  New = "new",
+  Updated = "updated",
+  Deleted = "deleted",
+  Synced = "synced",
 }
 
 
 export interface TodoListProps {
   id: string;
-  name: string;
-  status: TodoStatus.NotStarted | TodoStatus.Done;
+  name?: string;
+  completed?: boolean;
+  status?: TodoStatus;
 }

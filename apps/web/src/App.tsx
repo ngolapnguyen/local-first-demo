@@ -6,7 +6,8 @@ import { DBType, initDb } from "./db/init";
 import { createStore, produce } from "solid-js/store";
 import { TodoList } from "./components";
 import { BroadcastChannel } from 'broadcast-channel';
-import { TodoListProps } from "./types";
+import { TodoListProps, TodoStatus } from "./types";
+import { syncData } from "./utils/sync";
 
 const App: Component= () => {
   const [db, setDB] = createSignal<DBType | null>(null);
@@ -35,12 +36,21 @@ const App: Component= () => {
 
    const removeTodo = async (id: string) => {
     try {
-      await api()?.removeTodoById(id);
+      await api()?.updateTodo(id, {status: TodoStatus.Deleted});
       channel.postMessage({ action: 'remove', id });
 
       setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
     } catch (error) {
       console.error('Failed to remove todo:', error);
+    }
+  };
+
+  const toggleTodo = async (id: string) => {
+    try {
+      await api()?.updateTodo(id, {completed: !todos.find(todo => todo.id === id)?.completed, status: TodoStatus.Updated}, );
+      channel.postMessage({ action: 'toggle', id });
+    } catch (error) {
+      console.error('Failed to toggle todo:', error);
     }
   };
 
@@ -50,10 +60,12 @@ const App: Component= () => {
     });
   }
 
-  onMount(async() => {        
+  onMount(async() => {     
     const initializedDb = await initDb();
     setDB(initializedDb);
-    setAPI(new API(initializedDb));
+    const api = new API(initializedDb);
+    setAPI(api);
+ 
 
     channel.onmessage = (message) => {            
         if (message.action === 'add') {
@@ -66,6 +78,11 @@ const App: Component= () => {
           setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== message.id));
         }
       };
+
+    //Sync every 5 minutes (300000 milliseconds)
+    const syncInterval = setInterval(() => syncData(api), 30000);
+    // Clean up interval on unmount
+    return () => clearInterval(syncInterval);
   });
 
    createEffect(() => {        
@@ -87,7 +104,8 @@ const App: Component= () => {
           Add Todo
         </button>
       </div>
-      {todos.length > 0 && <TodoList todos={todos} removeTodo={removeTodo} />}
+  
+      {todos.length > 0 && <TodoList todos={todos} removeTodo={removeTodo} toggleTodo={toggleTodo} />}
   </div>
 };
 

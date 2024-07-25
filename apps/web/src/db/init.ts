@@ -1,7 +1,10 @@
-import { createRxDatabase, RxCollection } from "rxdb";
+import { addRxPlugin, createRxDatabase, RxCollection } from "rxdb";
+import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import { TodoStatus } from "../types";
 
+// Add the update plugin
+addRxPlugin(RxDBUpdatePlugin);
 
 export const initDb = async () => {
   try {
@@ -9,6 +12,7 @@ export const initDb = async () => {
     todos: RxCollection<{
       id: string;
       name: string;
+      completed: boolean;
       status: TodoStatus;
     }>;
   }>({
@@ -36,10 +40,13 @@ export const initDb = async () => {
           name: {
             type: "string",
           },
+          completed: {
+            type: "boolean",
+          },
           status: {
             type: "string",
             enum: Object.values(TodoStatus),
-            default: TodoStatus.NotStarted,
+            default: TodoStatus.New,
           },
         },
         required: ["id", "name", "status"],
