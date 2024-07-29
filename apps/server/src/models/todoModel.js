@@ -6,7 +6,6 @@ const TodoSchema = new mongoose.Schema(
     _id: String, // Map your custom id field to _id
     name: { type: String, required: true },
     completed: { type: Boolean, default: false },
-    status: { type: String, required: true },
     updatedAt: { type: Number, required: true },
   },
   { _id: false }

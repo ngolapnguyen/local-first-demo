@@ -8,6 +8,7 @@ export class API {
   async getTodos() {
     return this.db.collections.todos.find();
   }
+
   async addTodo(text: string) {
     return this.db.collections.todos.insert({
       _id: cuid(),
@@ -15,10 +16,6 @@ export class API {
       completed: false,
       updatedAt: Date.now(),
     });
-  }
-
-  async addMultipleTodos(todos: TodoListProps[]) {
-    return await this.db.collections.todos.bulkUpsert(todos);
   }
 
   async updateTodo(id: string, newTodo: Partial<TodoListProps>) {

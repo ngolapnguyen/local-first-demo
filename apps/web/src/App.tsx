@@ -31,7 +31,7 @@ const App: Component = () => {
 
   const toggleTodo = async (id: string) => {
     try {
-      await api()?.updateTodo(id, {
+      api()?.updateTodo(id, {
         completed: !todos.find((todo) => todo._id === id)?.completed,
       });
     } catch (error) {

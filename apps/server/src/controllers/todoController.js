@@ -44,6 +44,10 @@ exports.pushTodos = async (req, res) => {
         _id: changeRow.newDocumentState._id,
       });
       if (
+        // assumedMasterState: client thought BE has data like that
+        // realMasterState : real data in server
+        // Example case: Disable network
+        // Data in client vs BE has conflict
         (realMasterState && !changeRow.assumedMasterState) ||
         (realMasterState &&
           changeRow.assumedMasterState &&
@@ -57,16 +61,29 @@ exports.pushTodos = async (req, res) => {
         conflicts.push(realMasterState);
       } else {
         // no conflict -> write the document
-        await Todo.create({ ...changeRow.newDocumentState });
+        if (realMasterState) {
+          if (changeRow.newDocumentState._deleted) {
+            await Todo.deleteOne({ _id: changeRow.newDocumentState._id });
+          } else {
+            await Todo.updateOne(
+              { _id: changeRow.newDocumentState._id },
+              { $set: changeRow.newDocumentState }
+            );
+          }
+        } else {
+          await Todo.create({ ...changeRow.newDocumentState });
+        }
+
         event.documents.push(changeRow.newDocumentState);
         event.checkpoint = {
           id: changeRow.newDocumentState._id,
           updatedAt: changeRow.newDocumentState.updatedAt,
         };
+
+        if (event.documents.length > 0) {
+          pullStream$.next(event);
+        }
       }
-    }
-    if (event.documents.length > 0) {
-      pullStream$.next(event);
     }
 
     res.status(200).json({

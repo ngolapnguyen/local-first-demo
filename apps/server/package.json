@@ -11,10 +11,11 @@
     "express": "^4.19.2",
     "mongodb": "^6.8.0",
     "mongoose": "^8.5.1",
+    "nodemon": "^3.1.4",
     "rxdb": "^15.28.1",
     "rxdb-server": "^15.28.1"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "nodemon src/index.js"
   }
 }
