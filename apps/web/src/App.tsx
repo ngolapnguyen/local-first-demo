@@ -72,27 +72,49 @@ const App: Component = () => {
     });
   });
 
+  const addNote = () => {
+    if (!input.value.trim()) return;
+    addTodo(input.value);
+    input.value = "";
+  };
+
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+      addNote();
+    }
+  };
+
   return (
-    <div class="bg-slate-500 p-[50px] flex flex-col gap-4">
-      <div>
-        <input ref={input} />
-        <button
-          onClick={() => {
-            if (!input.value.trim()) return;
-            addTodo(input.value);
-            input.value = "";
-          }}>
-          Add Todo
-        </button>
+    <div class="w-[100vw] h-[100vh]">
+      <div class="relative w-[600px] mx-auto mt-[32px] mb-[16px]">
+        <div class="border rounded-md p-4">
+          <p class="text-gray-400 font-bold">Title</p>
+          <input
+            ref={input}
+            placeholder="Take a note ..."
+            class="w-full bg-[#202124] border-none outline-none pt-4 text-sm"
+            onKeyPress={handleKeyPress}
+          />
+          <div class="text-end">
+            <button
+              type="button"
+              class="text-medium font-bold"
+              onClick={addNote}>
+              Add note
+            </button>
+          </div>
+        </div>
       </div>
 
-      {todos.length > 0 && (
-        <TodoList
-          todos={todos}
-          removeTodo={removeTodo}
-          toggleTodo={toggleTodo}
-        />
-      )}
+      <div class="flex flex-wrap gap-4 mt-[32px] mx-8">
+        {todos.length > 0 && (
+          <TodoList
+            todos={todos}
+            removeTodo={removeTodo}
+            toggleTodo={toggleTodo}
+          />
+        )}
+      </div>
     </div>
   );
 };
