@@ -1,112 +1,100 @@
-
-import { RxDocument } from "rxdb";
-import { Component, createEffect, createSignal, onMount } from "solid-js";
+import { RxDocument, RxReplicationPullStreamItem } from "rxdb";
+import { Component, createSignal, onMount } from "solid-js";
 import { API } from "./api";
-import { DBType, initDb } from "./db/init";
-import { createStore, produce } from "solid-js/store";
+import { initDb, setupReplication } from "./db/init";
+import { createStore } from "solid-js/store";
 import { TodoList } from "./components";
-import { BroadcastChannel } from 'broadcast-channel';
-import { TodoListProps, TodoStatus } from "./types";
-import { syncData } from "./utils/sync";
+import { Checkpoint, RxBlockDocument, TodoListProps } from "./types";
+import { Subject } from "rxjs";
 
-const App: Component= () => {
-  const [db, setDB] = createSignal<DBType | null>(null);
-  const [api, setAPI] = createSignal<API>();  
-  const channel = new BroadcastChannel('todo-task');
+const App: Component = () => {
+  const [api, setAPI] = createSignal<API>();
 
   const [todos, setTodos] = createStore<RxDocument<TodoListProps>[]>([]);
   let input!: HTMLInputElement;
 
   const addTodo = async (text: string) => {
     try {
-      const response = await api()?.addTodo(text);
-      if (response) {
-        channel.postMessage({ action: 'add', todo: response.toJSON() });
-        setTodos(
-        produce((todos) => {
-          todos.push(response);
-        })
-      );
-      }  
-      
+      api()?.addTodo(text);
     } catch (error) {
-      console.log('error ass', error);  
+      console.error("Failed to add todo:", error);
     }
-  }
+  };
 
-   const removeTodo = async (id: string) => {
+  const removeTodo = async (id: string) => {
     try {
-      await api()?.updateTodo(id, {status: TodoStatus.Deleted});
-      channel.postMessage({ action: 'remove', id });
-
-      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+      api()?.removeTodoByIds([id]);
     } catch (error) {
-      console.error('Failed to remove todo:', error);
+      console.error("Failed to remove todo:", error);
     }
   };
 
   const toggleTodo = async (id: string) => {
     try {
-      await api()?.updateTodo(id, {completed: !todos.find(todo => todo.id === id)?.completed, status: TodoStatus.Updated}, );
-      channel.postMessage({ action: 'toggle', id });
+      await api()?.updateTodo(id, {
+        completed: !todos.find((todo) => todo._id === id)?.completed,
+      });
     } catch (error) {
-      console.error('Failed to toggle todo:', error);
+      console.error("Failed to toggle todo:", error);
     }
   };
 
-  const fetchTodos = async () => {
-      await api()?.getTodos().then(data => {
-      setTodos([...data]);
-    });
-  }
-
-  onMount(async() => {     
+  onMount(async () => {
     const initializedDb = await initDb();
-    setDB(initializedDb);
+
     const api = new API(initializedDb);
     setAPI(api);
- 
 
-    channel.onmessage = (message) => {            
-        if (message.action === 'add') {
-          setTodos(
-            produce((todos) => {
-              todos.push(message.todo);
-            })
-          );
-        } else if (message.action === 'remove') {
-          setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== message.id));
-        }
-      };
+    const myPullStream$ = new Subject<
+      RxReplicationPullStreamItem<RxBlockDocument, Checkpoint>
+    >();
+    const eventSource = new EventSource(
+      "http://localhost:4000/api/todo/pullStream",
+      {
+        withCredentials: true,
+      }
+    );
 
-    //Sync every 5 minutes (300000 milliseconds)
-    const syncInterval = setInterval(() => syncData(api), 30000);
-    // Clean up interval on unmount
-    return () => clearInterval(syncInterval);
+    eventSource.onmessage = (event) => {
+      const eventData = JSON.parse(event.data);
+      myPullStream$.next({
+        documents: eventData.documents,
+        checkpoint: eventData.checkpoint,
+      });
+    };
+
+    // Initialize replication
+    await setupReplication(initializedDb.collections.todos, myPullStream$);
+
+    // Create observable for the todos query
+    (await api.getTodos()).$.subscribe((todos: RxDocument<TodoListProps>[]) => {
+      setTodos([...todos]);
+    });
   });
 
-   createEffect(() => {        
-    if (api()) {
-      fetchTodos();
-    }
-  });
-
-  return <div class="bg-slate-500 p-[50px] flex flex-col gap-4">
-       <div>
+  return (
+    <div class="bg-slate-500 p-[50px] flex flex-col gap-4">
+      <div>
         <input ref={input} />
         <button
           onClick={() => {
             if (!input.value.trim()) return;
             addTodo(input.value);
             input.value = "";
-          }}
-        >
+          }}>
           Add Todo
         </button>
       </div>
-  
-      {todos.length > 0 && <TodoList todos={todos} removeTodo={removeTodo} toggleTodo={toggleTodo} />}
-  </div>
+
+      {todos.length > 0 && (
+        <TodoList
+          todos={todos}
+          removeTodo={removeTodo}
+          toggleTodo={toggleTodo}
+        />
+      )}
+    </div>
+  );
 };
 
 export default App;

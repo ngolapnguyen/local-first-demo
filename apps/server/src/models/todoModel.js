@@ -1,25 +1,15 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const TodoSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: Boolean,
-    unique: Boolean,
+// Define the schema
+const TodoSchema = new mongoose.Schema(
+  {
+    _id: String, // Map your custom id field to _id
+    name: { type: String, required: true },
+    completed: { type: Boolean, default: false },
+    status: { type: String, required: true },
+    updatedAt: { type: Number, required: true },
   },
-  name: {
-    type: String,
-    required: Boolean,
-  },
-  completed: {
-    type: Boolean,
-  },
-  status: {
-    type: String
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { _id: false }
+); // Disable automatic _id generation
 
-module.exports = mongoose.model('Todo', TodoSchema);
+module.exports = mongoose.model("Todo", TodoSchema);

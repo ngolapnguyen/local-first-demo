@@ -1,34 +1,36 @@
 import cuid from "cuid";
 import { DBType } from "../db/init";
-import { TodoListProps, TodoStatus } from "../types";
+import { TodoListProps } from "../types";
 
 export class API {
   constructor(readonly db: DBType) {}
 
-  async getTodos() {    
-    return this.db.collections.todos.find().exec();
+  async getTodos() {
+    return this.db.collections.todos.find();
   }
-
-  async getTodosByStatus(status: TodoStatus) {
-    return this.db.collections.todos.find({
-      selector: {
-        status
-      },
-    }).exec();
-  }
-
   async addTodo(text: string) {
-    return this.db.collections.todos.insert({ id: cuid(), name: text, completed: false , status: TodoStatus.New});
+    return this.db.collections.todos.insert({
+      _id: cuid(),
+      name: text,
+      completed: false,
+      updatedAt: Date.now(),
+    });
+  }
+
+  async addMultipleTodos(todos: TodoListProps[]) {
+    return await this.db.collections.todos.bulkUpsert(todos);
   }
 
   async updateTodo(id: string, newTodo: Partial<TodoListProps>) {
-    const todo = await this.db.collections.todos.findOne({ selector: { id} }).exec();
+    const todo = await this.db.collections.todos
+      .findOne({ selector: { _id: id } })
+      .exec();
     if (todo) {
       const updateData: Partial<TodoListProps> = {};
-      
+
       if (newTodo.name !== undefined) updateData.name = newTodo.name;
-      if (newTodo.completed !== undefined) updateData.completed = newTodo.completed;
-      if (newTodo.status !== undefined) updateData.status = newTodo.status;
+      if (newTodo.completed !== undefined)
+        updateData.completed = newTodo.completed;
 
       return todo.update({
         $set: updateData,
@@ -37,28 +39,13 @@ export class API {
   }
 
   async removeTodoByIds(ids: string[]) {
-   const query = this.db.collections.todos.find({
+    const query = this.db.collections.todos.find({
       selector: {
-        id: {
+        _id: {
           $in: ids,
         },
       },
     });
     return query.remove();
-  }
-
-  async markTodoAsSynced(ids: string[]) {    
-    const query = this.db.collections.todos.find({
-      selector: {
-        id: {
-          $in: ids,
-        },
-      },
-    });
-    return query.update({
-      $set: {
-        status: TodoStatus.Synced,
-      },
-    });
   }
 }

@@ -1,14 +1,17 @@
-export enum TodoStatus {
-  New = "new",
-  Updated = "updated",
-  Deleted = "deleted",
-  Synced = "synced",
-}
-
-
 export interface TodoListProps {
-  id: string;
+  _id: string;
   name?: string;
   completed?: boolean;
-  status?: TodoStatus;
+  updatedAt?: number;
+}
+
+export interface Checkpoint {
+  updatedAt: number;
+  _id: string;
+}
+
+export interface RxBlockDocument {
+  id: string;
+  name: string;
+  updatedAt: number;
 }
