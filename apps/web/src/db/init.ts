@@ -32,7 +32,7 @@ export async function setupReplication(
         async handler(changeRows) {
           try {
             const rawResponse = await fetch(
-              "http://localhost:4000/api/todo/sync/push",
+              `${import.meta.env.VITE_SERVER_API}/todo/sync/push`,
               {
                 method: "POST",
                 headers: {
@@ -59,13 +59,12 @@ export async function setupReplication(
       },
       pull: {
         async handler(checkpointOrNull) {
-          const { updatedAt, _id } = checkpointOrNull || {
-            updatedAt: 0,
-            id: "",
-          };
+          console.log("checkpointOrNull", checkpointOrNull);
+
+          const { updatedAt, id } = checkpointOrNull || { updatedAt: 0, id: 0 };
 
           const response = await fetch(
-            `http://localhost:4000/api/todo/sync/pull?minUpdatedAt=${updatedAt}&id=${_id}&limit=10`
+            `${import.meta.env.VITE_SERVER_API}/todo/sync/pull?minUpdatedAt=${updatedAt}&id=${id}&limit=10`
           );
           const { data } = await response.json();
 

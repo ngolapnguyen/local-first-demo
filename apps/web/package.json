@@ -6,7 +6,8 @@
     "dev": "vite --clearScreen false",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "build:prod": "tsc && vite build --mode production"
   },
   "license": "MIT",
   "devDependencies": {

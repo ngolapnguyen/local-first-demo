@@ -17,7 +17,7 @@ app.use(express.json());
 // CORS configuration
 app.use(
   cors({
-    origin: "http://localhost:3000", // Allow requests from the this origin
+    origin: process.env.CLIENT_SIDE_URI, // Allow requests from the this origin
     methods: ["GET", "POST", "PUT", "DELETE"], // Allow these request methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allow these request headers,
     credentials: true, // Allow credentials
@@ -25,6 +25,9 @@ app.use(
 );
 
 // Routes
+app.use("/api/test", async (req, res) => {
+  res.json({ message: process.env.MONGO_URI + " is working!" });
+});
 app.use("/api/todo", require("./routes/todoRoutes"));
 
 // Database connection
