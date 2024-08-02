@@ -16,6 +16,7 @@
     "rxdb-server": "^15.28.1"
   },
   "scripts": {
+    "build": "echo \"No build step necessary\"",
     "start": "nodemon src/index.js"
   }
 }
