@@ -7,7 +7,7 @@ export interface TodoListProps {
 
 export interface Checkpoint {
   updatedAt: number;
-  _id: string;
+  id: string;
 }
 
 export interface RxBlockDocument {

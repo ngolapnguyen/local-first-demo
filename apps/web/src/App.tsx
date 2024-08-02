@@ -49,7 +49,7 @@ const App: Component = () => {
       RxReplicationPullStreamItem<RxBlockDocument, Checkpoint>
     >();
     const eventSource = new EventSource(
-      "http://localhost:4000/api/todo/pullStream",
+      `${import.meta.env.VITE_SERVER_API}/todo/pullStream`,
       {
         withCredentials: true,
       }
@@ -61,6 +61,11 @@ const App: Component = () => {
         documents: eventData.documents,
         checkpoint: eventData.checkpoint,
       });
+    };
+
+    // Handle the client looses the connection
+    eventSource.onerror = () => {
+      myPullStream$.next("RESYNC");
     };
 
     // Initialize replication
