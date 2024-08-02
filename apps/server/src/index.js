@@ -25,6 +25,9 @@ app.use(
 );
 
 // Routes
+app.use("/api/test", async (req, res) => {
+  res.json({ message: process.env.MONGO_URI + " is working!" });
+});
 app.use("/api/todo", require("./routes/todoRoutes"));
 
 // Database connection
