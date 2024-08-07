@@ -1,6 +1,6 @@
 import cuid from "cuid";
 import { DBType } from "../db/init";
-import { TodoListProps } from "../types";
+import { TodoListProps, User } from "../types";
 
 export class API {
   constructor(readonly db: DBType) {}
@@ -9,10 +9,11 @@ export class API {
     return this.db.collections.todos.find();
   }
 
-  async addTodo(text: string) {
+  async addTodo(text: string, user: User) {
     return this.db.collections.todos.insert({
       _id: cuid(),
       name: text,
+      user,
       completed: false,
       updatedAt: Date.now(),
     });

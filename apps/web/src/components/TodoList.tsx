@@ -14,13 +14,13 @@ function TodoList(props: {
       {(todo) => {
         const { _id, name } = todo;
         return (
-          <div class="flex flex-row gap-4 w-[80%] mx-auto items-center">
-            <div class="border rounded-md p-2 flex-1">
+          <div class="flex flex-row gap-4 mx-auto items-center w-full">
+            <div class="p-2 flex-1 bg-white rounded-md">
               <span>{name}</span>
             </div>
             <button
               type="button"
-              class="border rounded-full w-8 h-8 bg-red-600"
+              class="border rounded-full w-8 h-8 bg-red-600 text-white p-1 hover:bg-red-500"
               onClick={() => removeTodo(_id)}>
               X
             </button>
