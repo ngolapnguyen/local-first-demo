@@ -18,6 +18,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "@solidjs/router": "^0.14.1",
     "rxdb": "^15.28.0"
   }
 }
