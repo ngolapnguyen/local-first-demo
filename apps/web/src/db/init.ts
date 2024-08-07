@@ -10,6 +10,7 @@ import { Checkpoint, RxBlockDocument, TodoListProps } from "../types";
 import { replicateRxCollection } from "rxdb/plugins/replication";
 import { RxDBLeaderElectionPlugin } from "rxdb/plugins/leader-election";
 import { Subject } from "rxjs";
+import apiFetch from "../utils/apiFetch";
 
 // Add the update plugin
 addRxPlugin(RxDBUpdatePlugin);
@@ -31,18 +32,12 @@ export async function setupReplication(
       push: {
         async handler(changeRows) {
           try {
-            const rawResponse = await fetch(
-              `${import.meta.env.VITE_SERVER_API}/todo/sync/push`,
-              {
-                method: "POST",
-                headers: {
-                  Accept: "application/json",
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(changeRows),
-              }
-            );
-            const conflictsArray = await rawResponse.json();
+            const conflictsArray = await apiFetch("api/todo/sync/push", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(changeRows),
+            });
+
             if (conflictsArray.success) {
               return [];
             } else {
@@ -59,22 +54,29 @@ export async function setupReplication(
       },
       pull: {
         async handler(checkpointOrNull) {
-          console.log("checkpointOrNull", checkpointOrNull);
-
           const { updatedAt, id } = checkpointOrNull || { updatedAt: 0, id: 0 };
 
-          const response = await fetch(
-            `${import.meta.env.VITE_SERVER_API}/todo/sync/pull?minUpdatedAt=${updatedAt}&id=${id}&limit=10`
+          const response = await apiFetch(
+            `api/todo/sync/pull?minUpdatedAt=${updatedAt}&id=${id}&limit=10`,
+            {
+              method: "GET",
+            }
           );
-          const { data } = await response.json();
+          if (response.success) {
+            const { data } = response;
 
-          // Extract documents and the new checkpoint from the response
-          const { documents, checkpoint } = data;
+            // Extract documents and the new checkpoint from the response
+            const { documents, checkpoint } = data;
 
-          // documents and checkpoint are saved in the database
+            // documents and checkpoint are saved in the database
+            return {
+              documents: documents,
+              checkpoint: checkpoint,
+            };
+          }
           return {
-            documents: documents,
-            checkpoint: checkpoint,
+            documents: [],
+            checkpoint: 0,
           };
         },
         batchSize: 10,

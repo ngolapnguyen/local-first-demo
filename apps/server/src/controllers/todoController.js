@@ -1,3 +1,4 @@
+const { mongoose } = require("mongoose");
 const Todo = require("../models/todoModel");
 const { Subject } = require("rxjs");
 
@@ -39,6 +40,7 @@ exports.pushTodos = async (req, res) => {
       documents: [],
       checkpoint: null,
     };
+    console.log(changeRows, "changeRows");
     for (const changeRow of changeRows) {
       const realMasterState = await Todo.findOne({
         _id: changeRow.newDocumentState._id,
@@ -102,7 +104,10 @@ exports.pullTodos = async (req, res) => {
     const id = req.query.id;
     const updatedAt = parseFloat(req.query.minUpdatedAt);
     const limit = parseInt(req.query.limit);
+    const userObjectId = new mongoose.Types.ObjectId(req.user._id);
+
     const documents = await Todo.find({
+      user: userObjectId,
       $or: [
         {
           updatedAt: { $gt: updatedAt },
